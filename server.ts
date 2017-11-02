@@ -5,7 +5,11 @@ import * as logger from 'morgan';
 import * as path from 'path';
 import errorHandler = require('errorhandler');
 import methodOverride = require('method-override');
-import { AppBackendRouter } from './app-backend-router/';
+
+import { AppGlobalConf } from './conf/app-global-conf';
+import { AppBackEndRouter } from './app-backend/router/';
+import { AppFrontEndRouter } from './app-frontend/router/';
+import { AppAPIRouter } from './app-api/router/';
 
 
 // server class
@@ -15,10 +19,12 @@ export class Server {
 
     constructor() {
         // create express application
+        console.log("== Server - global config ==", AppGlobalConf.getJSON());
         this.app = express();
         this.config();
-        this.routes();
-        this.api();
+        this.appBackEndRouter();
+        this.appFrontEndRouter();
+        this.appAPIRouter();
     }
 
 
@@ -29,10 +35,12 @@ export class Server {
 
     public config() {
         // static paths
-        this.app.use(express.static(path.join(__dirname, 'public')));
+        this.app.use(express.static(path.join(__dirname, AppGlobalConf.appFrontEndPublic)));
+        this.app.use(express.static(path.join(__dirname, AppGlobalConf.appBackEndPublic)));
+        this.app.use(express.static(path.join(__dirname, AppGlobalConf.appUploads)));
 
         // configure pug
-        this.app.set('views', path.join(__dirname, 'app-views'));
+        this.app.set('views', [path.join(__dirname, AppGlobalConf.appFrontEndView), path.join(__dirname, AppGlobalConf.appBackEndView)]);
         this.app.set('view engine', 'pug');
 
         // user logger middlware
@@ -63,20 +71,40 @@ export class Server {
     }
 
 
-    public routes() {
+    public appBackEndRouter() {
         let router: express.Router;
         router = express.Router();
 
         // index router
-        AppBackendRouter.create(router);
-        
+        AppBackEndRouter.create(router);
+
         // router middlware
         this.app.use(router);
     }
 
 
-    public api() {
-        
+    public appFrontEndRouter() {
+        let router: express.Router;
+        router = express.Router();
+
+        // index router
+        AppFrontEndRouter.create(router);
+
+        // router middlware
+        this.app.use(router);
     }
+
+
+    public appAPIRouter() {
+        let router: express.Router;
+        router = express.Router();
+
+        // index router api
+        AppAPIRouter.create(router);
+
+        // router middlware
+        this.app.use(router);
+    }
+
 }
 
